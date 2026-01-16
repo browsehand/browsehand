@@ -1,0 +1,49 @@
+---
+title: BrowseHand
+description: AI가 브라우저를 직접 제어하는 로컬 에이전트
+template: splash
+hero:
+  tagline: Claude가 당신의 브라우저를 직접 제어하여 데이터를 수집합니다
+  actions:
+    - text: 시작하기
+      link: /installation/
+      icon: right-arrow
+    - text: MCP 도구 보기
+      link: /tools/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## 핵심 기능
+
+<CardGrid stagger>
+  <Card title="실시간 브라우저 제어" icon="laptop">
+    Claude가 현재 열린 탭의 데이터를 읽고 조작합니다.
+  </Card>
+  <Card title="로그인 세션 유지" icon="seti:lock">
+    이미 로그인한 브라우저 환경을 그대로 활용합니다.
+  </Card>
+  <Card title="봇 탐지 우회" icon="approve-check">
+    실제 브라우저를 사용하므로 차단을 회피합니다.
+  </Card>
+  <Card title="로컬 파일 저장" icon="document">
+    수집한 데이터를 CSV, JSON으로 저장합니다.
+  </Card>
+</CardGrid>
+
+## 시스템 구조
+
+```
+Claude Desktop → MCP Server (localhost:8765) ↔ Chrome Extension → 브라우저 탭
+```
+
+## 빠른 시작
+
+```bash
+# MCP 서버 실행
+cd mcp-server && bun run index.js
+
+# Chrome Extension 설치
+# chrome://extensions/ → 개발자 모드 → chrome-extension 폴더 로드
+```

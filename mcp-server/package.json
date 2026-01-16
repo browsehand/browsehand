@@ -1,0 +1,18 @@
+{
+  "name": "phantom-agent-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for browser automation via Chrome Extension",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.js",
+    "dev": "bun --watch index.js"
+  },
+  "keywords": ["mcp", "browser", "automation", "scraping"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "ws": "^8.18.0"
+  }
+}
