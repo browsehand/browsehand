@@ -11,7 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-// WebSocket 서버 (Chrome Extension과 통신)
+// WebSocket Server (Communication with Chrome Extension)
 const wss = new WebSocketServer({ port: 8765 });
 let extensionSocket = null;
 
@@ -29,14 +29,14 @@ wss.on('connection', (ws) => {
     extensionSocket = null;
   });
 
-  // 연결 확인 메시지 전송
+  // Send connection confirmation message
   ws.send(JSON.stringify({ type: 'hello', message: 'MCP Server Connected!' }));
 });
 
-// MCP 서버 초기화
+// Initialize MCP Server
 const server = new Server(
   {
-    name: "phantom-agent",
+    name: "browsehand",
     version: "1.0.0",
   },
   {
@@ -46,32 +46,32 @@ const server = new Server(
   }
 );
 
-// MCP Tools 정의
+// Define MCP Tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
         name: "read_browser_content",
-        description: "현재 활성화된 브라우저 탭의 HTML 콘텐츠를 읽어옵니다.",
+        description: "Reads HTML content from the currently active browser tab.",
         inputSchema: {
           type: "object",
           properties: {
             selector: {
               type: "string",
-              description: "추출할 DOM 셀렉터 (선택사항, 기본값: body)",
+              description: "DOM selector to extract (optional, default: body)",
             },
           },
         },
       },
       {
         name: "execute_script",
-        description: "브라우저에서 JavaScript 코드를 실행합니다.",
+        description: "Executes JavaScript code in the browser.",
         inputSchema: {
           type: "object",
           properties: {
             code: {
               type: "string",
-              description: "실행할 JavaScript 코드",
+              description: "JavaScript code to execute",
             },
           },
           required: ["code"],
@@ -79,7 +79,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "ping_extension",
-        description: "Chrome Extension과의 연결 상태를 확인합니다.",
+        description: "Checks the connection status with the Chrome Extension.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -87,24 +87,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "save_to_csv",
-        description: "데이터를 CSV 파일로 저장합니다. 배열 형태의 데이터를 받아 CSV로 변환합니다.",
+        description: "Saves data to a CSV file. Converts an array of objects into CSV format.",
         inputSchema: {
           type: "object",
           properties: {
             filename: {
               type: "string",
-              description: "저장할 파일명 (예: leads.csv). 경로를 지정하지 않으면 바탕화면에 저장됩니다.",
+              description: "Filename to save (e.g., leads.csv). Saves to Desktop if no path is specified.",
             },
             data: {
               type: "array",
-              description: "저장할 데이터 배열. 각 항목은 객체 형태여야 합니다.",
+              description: "Array of data to save. Each item must be an object.",
               items: {
                 type: "object",
               },
             },
             append: {
               type: "boolean",
-              description: "true면 기존 파일에 추가, false면 덮어쓰기 (기본값: false)",
+              description: "If true, appends to existing file. If false, overwrites (default: false).",
             },
           },
           required: ["filename", "data"],
@@ -112,17 +112,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "save_to_json",
-        description: "데이터를 JSON 파일로 저장합니다.",
+        description: "Saves data to a JSON file.",
         inputSchema: {
           type: "object",
           properties: {
             filename: {
               type: "string",
-              description: "저장할 파일명 (예: data.json)",
+              description: "Filename to save (e.g., data.json)",
             },
             data: {
               type: "object",
-              description: "저장할 데이터 (객체 또는 배열)",
+              description: "Data to save (object or array)",
             },
           },
           required: ["filename", "data"],
@@ -130,18 +130,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "scroll_page",
-        description: "브라우저 페이지를 스크롤합니다.",
+        description: "Scrolls the browser page or a specific element.",
         inputSchema: {
           type: "object",
           properties: {
+            selector: {
+              type: "string",
+              description: "CSS selector of the element to scroll (scrolls entire page if not specified)",
+            },
             direction: {
               type: "string",
               enum: ["down", "up", "bottom", "top"],
-              description: "스크롤 방향",
+              description: "Scroll direction",
             },
             amount: {
               type: "number",
-              description: "스크롤할 픽셀 수 (direction이 down/up일 때만 사용)",
+              description: "Number of pixels to scroll (only used when direction is down/up)",
             },
           },
           required: ["direction"],
@@ -149,17 +153,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "click_element",
-        description: "특정 CSS 셀렉터의 요소를 클릭합니다.",
+        description: "Clicks an element specified by CSS selector.",
         inputSchema: {
           type: "object",
           properties: {
             selector: {
               type: "string",
-              description: "클릭할 요소의 CSS 셀렉터",
+              description: "CSS selector of the element to click",
             },
             waitAfter: {
               type: "number",
-              description: "클릭 후 대기할 밀리초 (기본값: 1000)",
+              description: "Milliseconds to wait after clicking (default: 1000)",
             },
           },
           required: ["selector"],
@@ -167,17 +171,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "wait_for_element",
-        description: "특정 요소가 나타날 때까지 대기합니다.",
+        description: "Waits until a specific element appears.",
         inputSchema: {
           type: "object",
           properties: {
             selector: {
               type: "string",
-              description: "대기할 요소의 CSS 셀렉터",
+              description: "CSS selector of the element to wait for",
             },
             timeout: {
               type: "number",
-              description: "최대 대기 시간(밀리초, 기본값: 10000)",
+              description: "Maximum wait time in milliseconds (default: 10000)",
             },
           },
           required: ["selector"],
@@ -185,24 +189,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "extract_structured_data",
-        description: "반복되는 요소들에서 구조화된 데이터를 추출합니다. 예: 업체 리스트에서 이름, 전화번호, 주소를 배열로 추출.",
+        description: "Extracts structured data from repeating elements. e.g., Extract name, phone, address from a business list.",
         inputSchema: {
           type: "object",
           properties: {
             containerSelector: {
               type: "string",
-              description: "반복되는 각 항목의 컨테이너 셀렉터 (예: '.business-item')",
+              description: "Container selector for each repeating item (e.g., '.business-item')",
             },
             fields: {
               type: "object",
-              description: "추출할 필드 정의. key는 필드명, value는 컨테이너 내 상대 셀렉터 (예: { name: '.business-name', phone: '.business-phone' })",
+              description: "Field definitions to extract. key is field name, value is relative selector within container (e.g., { name: '.business-name', phone: '.business-phone' })",
               additionalProperties: {
                 type: "string",
               },
             },
             limit: {
               type: "number",
-              description: "최대 추출 개수 (기본값: 전체)",
+              description: "Maximum number of items to extract (default: all)",
             },
           },
           required: ["containerSelector", "fields"],
@@ -210,7 +214,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_current_url",
-        description: "현재 브라우저 탭의 URL을 가져옵니다.",
+        description: "Gets the URL of the current browser tab.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -218,7 +222,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_dom_snapshot",
-        description: "AI 분석을 위해 현재 페이지의 DOM 구조(주요 태그와 텍스트)를 가져옵니다. 불필요한 태그는 제거됩니다.",
+        description: "Gets the DOM structure (main tags and text) of the current page for AI analysis. Unnecessary tags are removed.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -226,13 +230,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "navigate_to",
-        description: "브라우저를 특정 URL로 이동시킵니다.",
+        description: "Navigates the browser to a specific URL.",
         inputSchema: {
           type: "object",
           properties: {
             url: {
               type: "string",
-              description: "이동할 URL",
+              description: "URL to navigate to",
             },
           },
           required: ["url"],
@@ -242,7 +246,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
-// Tool 실행 핸들러
+// Tool Execution Handler
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -253,7 +257,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          text: "Error: Chrome Extension이 연결되지 않았습니다. 확장 프로그램을 설치하고 활성화해주세요.",
+          text: "Error: Chrome Extension is not connected. Please install and enable the extension.",
         },
       ],
     };
@@ -297,14 +301,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           selector 
         }));
 
-        // 타임아웃 (10초)
+        // Timeout (10 seconds)
         setTimeout(() => {
           extensionSocket.off('message', messageHandler);
           resolve({
             content: [
               {
                 type: "text",
-                text: "Timeout: 브라우저로부터 응답을 받지 못했습니다.",
+                text: "Timeout: No response received from browser.",
               },
             ],
           });
@@ -343,7 +347,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             content: [
               {
                 type: "text",
-                text: "Timeout: 스크립트 실행 결과를 받지 못했습니다.",
+                text: "Timeout: No script execution result received.",
               },
             ],
           });
@@ -437,7 +441,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     case "scroll_page": {
-      const { direction, amount = 500 } = args;
+      const { direction, amount = 500, selector } = args;
       
       return new Promise((resolve) => {
         const messageHandler = (data) => {
@@ -448,7 +452,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               content: [
                 {
                   type: "text",
-                  text: `✅ Scrolled ${direction}${amount ? ` by ${amount}px` : ''}`,
+                  text: `✅ Scrolled ${selector ? `element '${selector}'` : 'page'} ${direction}${amount ? ` by ${amount}px` : ''}`,
                 },
               ],
             });
@@ -459,7 +463,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         extensionSocket.send(JSON.stringify({ 
           type: 'scroll_page', 
           direction,
-          amount
+          amount,
+          selector
         }));
 
         setTimeout(() => {
@@ -726,9 +731,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-// 서버 시작
+// Start Server
 async function main() {
-  console.error('[MCP] Starting Phantom Agent MCP Server...');
+  console.error('[MCP] Starting BrowseHand MCP Server...');
   console.error('[MCP] WebSocket server listening on ws://localhost:8765');
   
   const transport = new StdioServerTransport();

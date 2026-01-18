@@ -1,49 +1,63 @@
 ---
 title: BrowseHand
-description: AI가 브라우저를 직접 제어하는 로컬 에이전트
+description: A local browser automation agent powered by Model Context Protocol (MCP)
 template: splash
 hero:
-  tagline: Claude가 당신의 브라우저를 직접 제어하여 데이터를 수집합니다
+  tagline: AI controls your browser locally. Login sessions, cookies, everything stays intact.
   actions:
-    - text: 시작하기
-      link: /installation/
+    - text: Quick Start
+      link: /guides/quickstart/
       icon: right-arrow
-    - text: MCP 도구 보기
-      link: /tools/
+    - text: Usage Scenarios
+      link: /guides/scenarios/
+      icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## 핵심 기능
+## What is BrowseHand?
+
+BrowseHand is a local browser automation agent based on the **Model Context Protocol (MCP)**.
+It allows AI assistants like Claude to directly control your real Chrome browser — reading data, clicking, scrolling, and extracting information.
 
 <CardGrid stagger>
-  <Card title="실시간 브라우저 제어" icon="laptop">
-    Claude가 현재 열린 탭의 데이터를 읽고 조작합니다.
-  </Card>
-  <Card title="로그인 세션 유지" icon="seti:lock">
-    이미 로그인한 브라우저 환경을 그대로 활용합니다.
-  </Card>
-  <Card title="봇 탐지 우회" icon="approve-check">
-    실제 브라우저를 사용하므로 차단을 회피합니다.
-  </Card>
-  <Card title="로컬 파일 저장" icon="document">
-    수집한 데이터를 CSV, JSON으로 저장합니다.
-  </Card>
+	<Card title="Real-time Browser Control" icon="laptop">
+		AI (Claude) reads and manipulates data from your currently active tab.
+	</Card>
+	<Card title="Session Persistence" icon="approve-check">
+		Uses your existing browser sessions. Access logged-in services like Google, Amazon, or any authenticated site without re-authentication.
+	</Card>
+	<Card title="Local File Storage" icon="document">
+		Save extracted data directly to your local machine as CSV or JSON.
+	</Card>
+	<Card title="Bot Detection Bypass" icon="approve-check-circle">
+		Uses your real browser, avoiding automation detection mechanisms.
+	</Card>
 </CardGrid>
 
-## 시스템 구조
+## Architecture
 
 ```
-Claude Desktop → MCP Server (localhost:8765) ↔ Chrome Extension → 브라우저 탭
+User/Claude → MCP Server (localhost:8765) ↔ Chrome Extension → Active Tab
 ```
 
-## 빠른 시작
+The MCP server acts as a bridge between Claude Desktop and the Chrome Extension.
+All communication happens **locally** — no data leaves your machine.
 
-```bash
-# MCP 서버 실행
-cd mcp-server && bun run index.js
+## Next Steps
 
-# Chrome Extension 설치
-# chrome://extensions/ → 개발자 모드 → chrome-extension 폴더 로드
-```
+<CardGrid>
+	<Card title="Quick Start" icon="rocket">
+		[Install and run your first command in 5 minutes](/guides/quickstart/)
+	</Card>
+	<Card title="Usage Scenarios" icon="list-format">
+		[Google Maps scraping, authentication automation, and more](/guides/scenarios/)
+	</Card>
+	<Card title="MCP Tools" icon="setting">
+		[Available tools and their parameters](/reference/tools/)
+	</Card>
+	<Card title="Troubleshooting" icon="warning">
+		[Common issues and solutions](/reference/troubleshooting/)
+	</Card>
+</CardGrid>

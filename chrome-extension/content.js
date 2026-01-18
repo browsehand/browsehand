@@ -1,7 +1,7 @@
-console.log('[Phantom Content] Script loaded on:', window.location.href);
+console.log('[BrowseHand Content] Script loaded on:', window.location.href);
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('[Phantom Content] Received message:', request);
+  console.log('[BrowseHand Content] Received message:', request);
 
   if (request.action === 'read_content') {
     try {
@@ -49,17 +49,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'scroll_page') {
     try {
-      const { direction, amount } = request;
+      const { direction, amount, selector } = request;
+      let target = window;
+      let isElement = false;
+
+      if (selector) {
+        const element = document.querySelector(selector);
+        if (!element) {
+          throw new Error(`Scroll target not found: ${selector}`);
+        }
+        target = element;
+        isElement = true;
+      }
       
       if (direction === 'bottom') {
-        window.scrollTo(0, document.body.scrollHeight);
+        if (isElement) {
+          target.scrollTo(0, target.scrollHeight);
+        } else {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
       } else if (direction === 'top') {
-        window.scrollTo(0, 0);
+        target.scrollTo(0, 0);
       } else if (direction === 'up') {
-        window.scrollBy(0, -amount);
+        target.scrollBy(0, -amount);
       } else {
         // default down
-        window.scrollBy(0, amount);
+        target.scrollBy(0, amount);
       }
       
       sendResponse({ success: true });
@@ -75,7 +90,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (element) {
         element.click();
         
-        // 클릭 후 대기 (옵션)
+        // Wait after click (optional)
         if (request.waitAfter) {
           setTimeout(() => {
             sendResponse({ success: true });
@@ -89,7 +104,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } catch (error) {
       sendResponse({ success: false, error: error.message });
     }
-    return true; // 비동기 응답을 위해 true 반환
+    return true; // Return true for async response
   }
 
   if (request.action === 'wait_for_element') {
@@ -149,18 +164,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'get_dom_snapshot') {
     try {
-      // AI가 분석하기 좋게 HTML을 단순화해서 리턴
-      // 1. 눈에 보이는 요소만 (visibility check) - 여기선 생략하고 구조만
-      // 2. 너무 긴 텍스트는 자름
-      // 3. 불필요한 태그(script, style) 제거
+      // Return simplified HTML for AI analysis
+      // 1. Omitted visibility check for now
+      // 2. Truncate long texts
+      // 3. Remove unnecessary tags (script, style)
       
       const clone = document.body.cloneNode(true);
       
-      // 불필요한 태그 제거
+      // Remove unnecessary tags
       const toRemove = clone.querySelectorAll('script, style, noscript, svg, path, link, meta, iframe');
       toRemove.forEach(el => el.remove());
       
-      // 주석 제거 및 속성 정리 (class, id만 남김)
+      // Remove comments and clean attributes (keep only class, id, etc.)
       const cleanAttributes = (node) => {
         if (node.nodeType === 1) { // Element
           const keepAttrs = ['id', 'class', 'role', 'aria-label', 'data-index'];
@@ -170,13 +185,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               node.removeAttribute(attr.name);
             }
           });
-          // 자식들도 재귀적으로
+          // Recursively clean children
           Array.from(node.children).forEach(cleanAttributes);
         }
       };
       cleanAttributes(clone);
 
-      // HTML 문자열로 변환 (너무 길면 자름)
+      // Convert to HTML string (truncate if too long)
       let html = clone.innerHTML;
       if (html.length > 50000) {
         html = html.substring(0, 50000) + '... (truncated)';

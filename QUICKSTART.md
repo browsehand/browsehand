@@ -1,6 +1,6 @@
-# 🚀 빠른 시작 가이드
+# 🚀 Quick Start Guide
 
-## 1단계: MCP 서버 실행
+## Step 1: Run MCP Server
 
 ```bash
 cd /Users/indo/code/project/phantom-agent/mcp-server
@@ -8,48 +8,48 @@ npm install
 npm start
 ```
 
-**예상 출력:**
+**Expected Output:**
 ```
-[MCP] Starting Phantom Agent MCP Server...
+[MCP] Starting BrowseHand MCP Server...
 [MCP] WebSocket server listening on ws://localhost:8765
 [MCP] MCP Server ready. Waiting for Chrome Extension connection...
 ```
 
-## 2단계: Chrome Extension 설치
+## Step 2: Install Chrome Extension
 
-1. Chrome 브라우저 열기
-2. 주소창에 `chrome://extensions/` 입력
-3. 우측 상단 **"개발자 모드"** 토글 활성화
-4. **"압축해제된 확장 프로그램을 로드합니다"** 클릭
-5. `/Users/indo/code/project/phantom-agent/chrome-extension` 폴더 선택
+1. Open Chrome browser
+2. Enter `chrome://extensions/` in address bar
+3. Enable **"Developer mode"** toggle in top right
+4. Click **"Load unpacked"**
+5. Select `/Users/indo/code/project/phantom-agent/chrome-extension` folder
 
-**확인 방법:**
-- 확장 프로그램 목록에 "Phantom Agent" 표시
-- 브라우저 콘솔(F12)에서 `[Phantom] ✅ Connected to MCP server` 메시지 확인
+**Verification:**
+- "BrowseHand" appears in extension list
+- Check browser console (F12) for `[BrowseHand] ✅ Connected to MCP server`
 
-## 3단계: 테스트 페이지 열기
+## Step 3: Open Test Page
 
 ```bash
 open /Users/indo/code/project/phantom-agent/test-page.html
 ```
 
-또는 브라우저에서 직접 파일 열기
+Or open the file directly in browser.
 
-## 4단계: Claude Desktop 설정 (선택사항)
+## Step 4: Configure Claude Desktop (Optional)
 
-Claude Desktop과 연동하려면:
+To integrate with Claude Desktop:
 
 ```bash
-# 설정 파일 열기
+# Open config file
 code ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```
 
-다음 내용 추가:
+Add the following:
 
 ```json
 {
   "mcpServers": {
-    "phantom-agent": {
+    "browsehand": {
       "command": "node",
       "args": ["/Users/indo/code/project/phantom-agent/mcp-server/index.js"]
     }
@@ -57,74 +57,74 @@ code ~/Library/Application\ Support/Claude/claude_desktop_config.json
 }
 ```
 
-Claude Desktop 재시작 후 사용 가능
+Restart Claude Desktop to apply changes.
 
-## 5단계: 테스트
+## Step 5: Test
 
-### 브라우저 콘솔에서 직접 테스트
+### Test directly in Browser Console
 
-1. 테스트 페이지 열기
-2. F12 눌러 개발자 도구 열기
-3. Console 탭에서 확인:
+1. Open test page
+2. Press F12 to open Developer Tools
+3. Check Console tab:
 
 ```javascript
-// MCP 서버 연결 상태 확인
-// [Phantom] ✅ Connected to MCP server 메시지가 보여야 함
+// Check MCP Server connection
+// Should see: [BrowseHand] ✅ Connected to MCP server
 ```
 
-### Claude Desktop에서 테스트
+### Test in Claude Desktop
 
-테스트 페이지를 열어둔 상태에서 Claude에게:
-
-```
-"ping_extension 도구를 사용해서 확장 프로그램 연결 상태를 확인해줘"
-```
+With the test page open, ask Claude:
 
 ```
-"read_browser_content 도구로 현재 페이지의 내용을 읽어줘"
+"Use ping_extension tool to check extension connection status"
 ```
 
 ```
-"execute_script 도구로 document.title을 실행해줘"
+"Use read_browser_content tool to read current page content"
 ```
 
-## 문제 해결
+```
+"Use execute_script tool to run document.title"
+```
 
-### 확장 프로그램이 연결되지 않음
+## Troubleshooting
 
-1. MCP 서버가 실행 중인지 확인
-2. 브라우저 콘솔에서 에러 메시지 확인
-3. 확장 프로그램 재로드: `chrome://extensions/`에서 새로고침 버튼 클릭
+### Extension Not Connected
 
-### MCP 서버 에러
+1. Check if MCP server is running
+2. Check error messages in browser console
+3. Reload extension: Click refresh button in `chrome://extensions/`
+
+### MCP Server Error
 
 ```bash
-# 포트가 이미 사용 중인 경우
+# If port is already in use
 lsof -ti:8765 | xargs kill -9
 
-# 다시 시작
+# Restart
 npm start
 ```
 
-### 아이콘 경고
+### Icon Warning
 
-아이콘 파일이 없어도 기능은 정상 작동합니다. 경고를 없애려면:
+The extension works fine without icon files. To remove warning:
 
 ```bash
 cd chrome-extension
-# 아무 PNG 이미지를 복사해서
+# Copy any PNG image
 cp /path/to/any/image.png icon16.png
 cp /path/to/any/image.png icon48.png
 cp /path/to/any/image.png icon128.png
 ```
 
-## 다음 단계
+## Next Steps
 
-Phase 1 완료! 이제 다음 기능을 추가할 수 있습니다:
+Phase 1 Complete! You can now add:
 
-- [ ] 페이지네이션 자동 처리
-- [ ] 데이터를 CSV로 저장
-- [ ] 특정 셀렉터로 데이터 추출
-- [ ] 클릭 이벤트 자동화
+- [ ] Automatic pagination handling
+- [ ] Save data to CSV
+- [ ] Extract data with specific selectors
+- [ ] Click event automation
 
-개발을 계속하려면 `README.md`의 로드맵을 참고하세요.
+Refer to roadmap in `README.md` for further development.

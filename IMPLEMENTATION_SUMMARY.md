@@ -149,7 +149,7 @@ MCP → Extension → pong 응답
 - [ ] MCP 서버 실행: `npm start`
 - [ ] Extension 설치: `chrome://extensions/`
 - [ ] 테스트 페이지 열기: `test-page.html`
-- [ ] 브라우저 콘솔에서 연결 확인: `[Phantom] ✅ Connected`
+- [ ] 브라우저 콘솔에서 연결 확인: `[BrowseHand] ✅ Connected`
 - [ ] Claude Desktop에서 `ping_extension` 실행
 - [ ] Claude Desktop에서 `read_browser_content` 실행
 - [ ] Claude Desktop에서 `execute_script` 실행

@@ -88,13 +88,13 @@ pub struct NavigateArgs {
 }
 
 #[derive(Clone)]
-pub struct PhantomAgent {
+pub struct BrowseHand {
     bridge: Arc<RwLock<ExtensionBridge>>,
-    tool_router: ToolRouter<PhantomAgent>,
+    tool_router: ToolRouter<BrowseHand>,
 }
 
 #[tool_router]
-impl PhantomAgent {
+impl BrowseHand {
     pub fn new(bridge: Arc<RwLock<ExtensionBridge>>) -> Self {
         Self {
             bridge,
@@ -375,7 +375,7 @@ impl PhantomAgent {
 }
 
 #[tool_handler]
-impl ServerHandler for PhantomAgent {
+impl ServerHandler for BrowseHand {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::V_2024_11_05,
@@ -391,12 +391,12 @@ impl ServerHandler for PhantomAgent {
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
-        .with_env_filter("phantom_agent=info")
+        .with_env_filter("browsehand=info")
         .with_writer(std::io::stderr)
         .with_ansi(false)
         .init();
 
-    info!("Starting Phantom Agent MCP Server...");
+    info!("Starting BrowseHand MCP Server...");
 
     let bridge = Arc::new(RwLock::new(ExtensionBridge::new()));
     let bridge_clone = Arc::clone(&bridge);
@@ -409,7 +409,7 @@ async fn main() -> Result<()> {
 
     info!("WebSocket server listening on ws://localhost:8765");
 
-    let agent = PhantomAgent::new(bridge);
+    let agent = BrowseHand::new(bridge);
 
     info!("MCP Server ready. Waiting for Chrome Extension connection...");
 

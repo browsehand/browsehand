@@ -93,7 +93,7 @@ function callTool(name, args = {}) {
   });
 }
 
-describe('Phantom Agent E2E (Real Browser)', { timeout: 120000 }, () => {
+describe('BrowseHand E2E (Real Browser)', { timeout: 120000 }, () => {
   before(async () => {
     console.log('1. Starting MCP server...');
     await startMcpServer();
@@ -134,7 +134,7 @@ describe('Phantom Agent E2E (Real Browser)', { timeout: 120000 }, () => {
   test('2. read_browser_content (h1)', async () => {
     const result = await callTool('read_browser_content', { selector: 'h1' });
     const text = result.content[0].text;
-    assert.ok(text.includes('Phantom Agent'), `Expected h1 to contain "Phantom Agent", got: ${text}`);
+    assert.ok(text.includes('BrowseHand'), `Expected h1 to contain "BrowseHand", got: ${text}`);
   });
 
   test('3. execute_script', async () => {

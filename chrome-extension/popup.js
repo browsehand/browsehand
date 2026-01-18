@@ -10,10 +10,10 @@ function updateStatus(connected) {
   const statusEl = document.getElementById('status');
   if (connected) {
     statusEl.className = 'status connected';
-    statusEl.textContent = '🟢 MCP 서버에 연결됨';
+    statusEl.textContent = '🟢 Connected to MCP Server';
   } else {
     statusEl.className = 'status disconnected';
-    statusEl.textContent = '🔴 MCP 서버에 연결되지 않음';
+    statusEl.textContent = '🔴 Not Connected to MCP Server';
   }
 }
 

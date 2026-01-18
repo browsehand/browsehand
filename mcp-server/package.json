@@ -1,5 +1,5 @@
 {
-  "name": "phantom-agent-mcp",
+  "name": "browsehand-mcp",
   "version": "1.0.0",
   "description": "MCP server for browser automation via Chrome Extension",
   "main": "index.js",

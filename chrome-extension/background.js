@@ -1,17 +1,50 @@
 let ws = null;
 let reconnectInterval = null;
 
+function handleExtensionError(requestId, context, responseType) {
+  if (chrome.runtime.lastError) {
+    const error = chrome.runtime.lastError;
+    const errorMsg = error.message;
+    console.error(`[BrowseHand] Error in ${context}:`, error);
+    
+    let userMsg = errorMsg;
+    if (errorMsg && errorMsg.includes('Receiving end does not exist')) {
+      userMsg = 'Content script not connected. Please reload the target tab.';
+      console.warn('[BrowseHand] 💡 Tip: The content script might not be injected. Try reloading the web page.');
+    }
+    
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      if (responseType) {
+        ws.send(JSON.stringify({ 
+          type: responseType, 
+          requestId: requestId, 
+          success: false, 
+          error: userMsg 
+        }));
+      } else {
+        ws.send(JSON.stringify({ 
+          type: 'error', 
+          requestId: requestId, 
+          message: userMsg 
+        }));
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 function connectToMCP() {
   if (ws && ws.readyState === WebSocket.OPEN) {
-    console.log('[Phantom] Already connected to MCP server');
+    console.log('[BrowseHand] Already connected to MCP server');
     return;
   }
 
-  console.log('[Phantom] Connecting to MCP server...');
+  console.log('[BrowseHand] Connecting to MCP server...');
   ws = new WebSocket('ws://localhost:8765');
 
   ws.onopen = () => {
-    console.log('[Phantom] ✅ Connected to MCP server');
+    console.log('[BrowseHand] ✅ Connected to MCP server');
     if (reconnectInterval) {
       clearInterval(reconnectInterval);
       reconnectInterval = null;
@@ -20,16 +53,21 @@ function connectToMCP() {
 
   ws.onmessage = async (event) => {
     const message = JSON.parse(event.data);
-    console.log('[Phantom] Message from MCP:', message);
+    console.log('[BrowseHand] Message from MCP:', message);
 
     switch (message.type) {
       case 'hello':
-        console.log('[Phantom] 🎉', message.message);
+        console.log('[BrowseHand] 🎉', message.message);
         break;
 
       case 'ping':
-        ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
-        console.log('[Phantom] Pong sent to MCP');
+        ws.send(JSON.stringify({ 
+          type: 'pong', 
+          requestId: message.requestId,
+          success: true,
+          timestamp: Date.now() 
+        }));
+        console.log('[BrowseHand] Pong sent to MCP');
         break;
 
       case 'read_content':
@@ -37,20 +75,16 @@ function connectToMCP() {
         if (tabs[0]) {
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'read_content',
-            selector: message.selector
+            selector: message.payload?.selector || message.selector
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('[Phantom] Error:', chrome.runtime.lastError);
-              ws.send(JSON.stringify({ 
-                type: 'error', 
-                message: chrome.runtime.lastError.message 
-              }));
-            } else {
-              ws.send(JSON.stringify({ 
-                type: 'content', 
-                data: response.content 
-              }));
-            }
+            if (handleExtensionError(message.requestId, 'read_content')) return;
+
+            ws.send(JSON.stringify({ 
+              type: 'content',
+              requestId: message.requestId,
+              success: true,
+              data: response.content 
+            }));
           });
         }
         break;
@@ -60,20 +94,16 @@ function connectToMCP() {
         if (activeTabs[0]) {
           chrome.tabs.sendMessage(activeTabs[0].id, {
             action: 'execute_script',
-            code: message.code
+            code: message.payload?.code || message.code
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('[Phantom] Error:', chrome.runtime.lastError);
-              ws.send(JSON.stringify({ 
-                type: 'error', 
-                message: chrome.runtime.lastError.message 
-              }));
-            } else {
-              ws.send(JSON.stringify({ 
-                type: 'script_result', 
-                result: response.result 
-              }));
-            }
+            if (handleExtensionError(message.requestId, 'execute_script')) return;
+
+            ws.send(JSON.stringify({ 
+              type: 'script_result',
+              requestId: message.requestId,
+              success: true,
+              result: response.result 
+            }));
           });
         }
         break;
@@ -81,16 +111,15 @@ function connectToMCP() {
       case 'scroll_page': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
+          const payload = message.payload || message;
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'scroll_page',
-            direction: message.direction,
-            amount: message.amount
+            direction: payload.direction,
+            amount: payload.amount
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'error', message: chrome.runtime.lastError.message }));
-            } else {
-              ws.send(JSON.stringify({ type: 'scroll_result', success: true }));
-            }
+            if (handleExtensionError(message.requestId, 'scroll_page')) return;
+
+            ws.send(JSON.stringify({ type: 'scroll_result', requestId: message.requestId, success: true }));
           });
         }
         break;
@@ -99,16 +128,15 @@ function connectToMCP() {
       case 'click_element': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
+          const payload = message.payload || message;
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'click_element',
-            selector: message.selector,
-            waitAfter: message.waitAfter
+            selector: payload.selector,
+            waitAfter: payload.waitAfter
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'click_result', success: false, error: chrome.runtime.lastError.message }));
-            } else {
-              ws.send(JSON.stringify({ type: 'click_result', success: response.success, error: response.error }));
-            }
+            if (handleExtensionError(message.requestId, 'click_element', 'click_result')) return;
+
+            ws.send(JSON.stringify({ type: 'click_result', requestId: message.requestId, success: response.success, error: response.error }));
           });
         }
         break;
@@ -117,16 +145,15 @@ function connectToMCP() {
       case 'wait_for_element': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
+          const payload = message.payload || message;
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'wait_for_element',
-            selector: message.selector,
-            timeout: message.timeout
+            selector: payload.selector,
+            timeout: payload.timeout
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'wait_result', success: false, error: chrome.runtime.lastError.message }));
-            } else {
-              ws.send(JSON.stringify({ type: 'wait_result', success: response.success }));
-            }
+            if (handleExtensionError(message.requestId, 'wait_for_element', 'wait_result')) return;
+
+            ws.send(JSON.stringify({ type: 'wait_result', requestId: message.requestId, success: response.success }));
           });
         }
         break;
@@ -135,17 +162,16 @@ function connectToMCP() {
       case 'extract_structured_data': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
+          const payload = message.payload || message;
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'extract_structured_data',
-            containerSelector: message.containerSelector,
-            fields: message.fields,
-            limit: message.limit
+            containerSelector: payload.containerSelector,
+            fields: payload.fields,
+            limit: payload.limit
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'extracted_data', success: false, error: chrome.runtime.lastError.message }));
-            } else {
-              ws.send(JSON.stringify({ type: 'extracted_data', success: response.success, data: response.data, error: response.error }));
-            }
+            if (handleExtensionError(message.requestId, 'extract_structured_data', 'extracted_data')) return;
+
+            ws.send(JSON.stringify({ type: 'extracted_data', requestId: message.requestId, success: response.success, data: response.data, error: response.error }));
           });
         }
         break;
@@ -154,7 +180,7 @@ function connectToMCP() {
       case 'get_current_url': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
-          ws.send(JSON.stringify({ type: 'current_url', url: tabs[0].url }));
+          ws.send(JSON.stringify({ type: 'current_url', requestId: message.requestId, success: true, url: tabs[0].url }));
         }
         break;
       }
@@ -162,14 +188,13 @@ function connectToMCP() {
       case 'navigate_to': {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0]) {
-          chrome.tabs.update(tabs[0].id, { url: message.url }, () => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'navigation_result', success: false, error: chrome.runtime.lastError.message }));
-            } else {
-              setTimeout(() => {
-                ws.send(JSON.stringify({ type: 'navigation_result', success: true }));
-              }, 2000);
-            }
+          const payload = message.payload || message;
+          chrome.tabs.update(tabs[0].id, { url: payload.url }, () => {
+            if (handleExtensionError(message.requestId, 'navigate_to', 'navigation_result')) return;
+
+            setTimeout(() => {
+              ws.send(JSON.stringify({ type: 'navigation_result', requestId: message.requestId, success: true }));
+            }, 2000);
           });
         }
         break;
@@ -181,11 +206,9 @@ function connectToMCP() {
           chrome.tabs.sendMessage(tabs[0].id, {
             action: 'get_dom_snapshot'
           }, (response) => {
-            if (chrome.runtime.lastError) {
-              ws.send(JSON.stringify({ type: 'dom_snapshot', success: false, error: chrome.runtime.lastError.message }));
-            } else {
-              ws.send(JSON.stringify({ type: 'dom_snapshot', success: response.success, html: response.html }));
-            }
+            if (handleExtensionError(message.requestId, 'get_dom_snapshot', 'dom_snapshot')) return;
+
+            ws.send(JSON.stringify({ type: 'dom_snapshot', requestId: message.requestId, success: response.success, html: response.html }));
           });
         }
         break;
@@ -194,11 +217,11 @@ function connectToMCP() {
   };
 
   ws.onerror = (error) => {
-    console.error('[Phantom] WebSocket error:', error);
+    console.error('[BrowseHand] WebSocket error:', error);
   };
 
   ws.onclose = () => {
-    console.log('[Phantom] ❌ Disconnected from MCP server. Reconnecting...');
+    console.log('[BrowseHand] ❌ Disconnected from MCP server. Reconnecting...');
     ws = null;
     
     if (!reconnectInterval) {
@@ -210,12 +233,12 @@ function connectToMCP() {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('[Phantom] Extension installed. Connecting to MCP...');
+  console.log('[BrowseHand] Extension installed. Connecting to MCP...');
   connectToMCP();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  console.log('[Phantom] Browser started. Connecting to MCP...');
+  console.log('[BrowseHand] Browser started. Connecting to MCP...');
   connectToMCP();
 });
 
