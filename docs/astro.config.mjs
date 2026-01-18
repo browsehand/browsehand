@@ -2,26 +2,31 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+// https://astro.build/config
 export default defineConfig({
-	redirects: {
-		'/': '/installation/',
-	},
+	site: 'https://docs.browsehand.com',
 	integrations: [
 		starlight({
 			title: 'BrowseHand',
-			defaultLocale: 'ko',
-			locales: {
-				ko: { label: '한국어', lang: 'ko' },
-			},
+			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/user/browsehand' }],
 			sidebar: [
-				{ label: '설치하기', link: '/installation/' },
-				{ label: '사용 방법', link: '/quick-start/' },
-				{ label: '기능 목록', link: '/tools/' },
 				{
-					label: '활용 예제',
+					label: 'Getting Started',
 					items: [
-						{ label: '구글 맵에서 맛집 수집', link: '/examples/google-maps/' },
-						{ label: '네이버 지도 가게 수집', link: '/examples/naver-map/' },
+						{ label: 'Quick Start', link: '/guides/quickstart/' },
+					],
+				},
+				{
+					label: 'Guides',
+					items: [
+						{ label: 'Usage Scenarios', link: '/guides/scenarios/' },
+					],
+				},
+				{
+					label: 'Reference',
+					items: [
+						{ label: 'MCP Tools', link: '/reference/tools/' },
+						{ label: 'Troubleshooting', link: '/reference/troubleshooting/' },
 					],
 				},
 			],
